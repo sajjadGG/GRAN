@@ -40,11 +40,11 @@ train:
   lr_decay: 0.3
   lr_decay_epoch: [100000000] # no decay
   num_workers: 0
-  max_epoch: 3000
+  max_epoch: 3
   batch_size: 1
-  display_iter: 10
-  snapshot_epoch: 100
-  valid_epoch: 50
+  display_iter: 1
+  snapshot_epoch: 3
+  valid_epoch: 5
   lr: 1.0e-4
   wd: 0.0e-4
   momentum: 0.9
@@ -54,14 +54,14 @@ train:
   resume_dir: # exp/GRAN/your_exp_folder
   resume_model: model_snapshot_0005000.pth
 test:
-  batch_size: 20
+  batch_size: 1
   num_workers: 0
-  num_test_gen: 20 # number of generated samples
+  num_test_gen: 1 # number of generated samples
   is_vis: true
   is_single_plot: false # visualize `num_vis` samples in a single image
   is_test_ER: false # test Erdos-Renyi baseline
   num_vis: 20
   vis_num_row: 5 # visualize `num_vis` samples in `vis_num_row` rows
   better_vis: true
-  test_model_dir: snapshot_model
-  test_model_name: gran_grid.pth
+  test_model_dir: exp/GRAN/GRANMixtureBernoulli_grid_2021-Dec-30-23-49-03_21248
+  test_model_name: model_snapshot_0000003.pth
