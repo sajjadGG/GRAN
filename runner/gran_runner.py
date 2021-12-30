@@ -112,8 +112,8 @@ class GranRunner(object):
 
         ### load graphs
         self.graphs = create_graphs(
-            config.dataset.name, data_dir=config.dataset.data_path
-        )
+            "COMPLETE", data_dir=config.dataset.data_path
+        )  # config.dataset.name
 
         self.train_ratio = config.dataset.train_ratio
         self.dev_ratio = config.dataset.dev_ratio
@@ -180,6 +180,8 @@ class GranRunner(object):
             self.config, self.graphs_train, tag="train"
         )
         print(f"class: {type(train_dataset)}")
+        print(f"len: {len(train_dataset)}")
+        print(f"get item {train_dataset.__getitem__(0)[0]['adj'].shape}")
         # print(train_dataset)
         train_loader = torch.utils.data.DataLoader(
             train_dataset,
@@ -192,19 +194,20 @@ class GranRunner(object):
 
         # create models
         l = train_loader.__iter__().next()
-
+        print(f"even here : {l[0]['adj'].shape}")
         model = eval(self.model_conf.name)(self.config)
-        from torchsummary import summary
+        # from torchsummary import summary
 
-        print(f"data is {l[0]['adj'].shape}")
+        # print(f"data is {l[0]['adj'].shape}")
         # print(f"data shape is {l.shape}")
         # summary(model, l.shape)
+        params = filter(lambda p: p.requires_grad, model.parameters())
 
         if self.use_gpu:
             model = DataParallel(model, device_ids=self.gpus).to(self.device)
 
         # create optimizer
-        params = filter(lambda p: p.requires_grad, model.parameters())
+
         if self.train_conf.optimizer == "SGD":
             optimizer = optim.SGD(
                 params,
@@ -230,6 +233,7 @@ class GranRunner(object):
         optimizer.zero_grad()
 
         # resume training
+
         resume_epoch = 0
         if self.train_conf.is_resume:
             model_file = os.path.join(
@@ -254,7 +258,8 @@ class GranRunner(object):
 
             for inner_iter in range(len(train_loader) // self.num_gpus):
                 optimizer.zero_grad()
-
+                l = train_loader.__iter__().next()
+                # print(f"after here : {l[0]['adj'].shape}")
                 batch_data = []
                 if self.use_gpu:
                     for _ in self.gpus:
@@ -265,7 +270,9 @@ class GranRunner(object):
                 avg_train_loss = 0.0
                 for ff in range(self.dataset_conf.num_fwd_pass):
                     batch_fwd = []
-
+                    # print(
+                    #     f"lets see training example {ff} : {batch_data[0][ff]['adj'].shape}"
+                    # )
                     if self.use_gpu:
                         for dd, gpu_id in enumerate(self.gpus):
                             data = {}
@@ -356,7 +363,7 @@ class GranRunner(object):
 
     def test(self):
         self.config.save_dir = self.test_conf.test_model_dir
-
+        print(f"traing graph : {len(self.graphs_train)}")
         ### Compute Erdos-Renyi baseline
         if self.config.test.is_test_ER:
             p_ER = sum([aa.number_of_edges() for aa in self.graphs_train]) / sum(

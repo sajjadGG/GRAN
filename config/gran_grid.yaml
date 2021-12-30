@@ -26,7 +26,7 @@ model:
   is_sym: true
   block_size: 1
   sample_stride: 1
-  max_num_nodes: 361
+  max_num_nodes: 200
   hidden_dim: 128
   embedding_dim: 128
   num_GNN_layers: 7
@@ -63,5 +63,5 @@ test:
   num_vis: 20
   vis_num_row: 5 # visualize `num_vis` samples in `vis_num_row` rows
   better_vis: true
-  test_model_dir: exp/GRAN/GRANMixtureBernoulli_grid_2021-Dec-30-23-49-03_21248
+  test_model_dir: exp/GRAN/GRANMixtureBernoulli_grid_2021-Dec-31-01-35-46_4972
   test_model_name: model_snapshot_0000003.pth

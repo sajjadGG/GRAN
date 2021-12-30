@@ -20,8 +20,10 @@ class GRANData(object):
         self.block_size = config.model.block_size
         self.stride = config.model.sample_stride
 
-        self.graphs = graphs
-        self.num_graphs = len(graphs)
+        # self.graphs = graphs
+        # self.num_graphs = len(graphs)
+        self.graphs = [nx.complete_graph(np.random.randint(5, 100)) for i in range(20)]
+        self.num_graphs = 20
         self.npr = np.random.RandomState(config.seed)
         self.node_order = config.dataset.node_order
         self.num_canonical_order = config.model.num_canonical_order
@@ -46,9 +48,8 @@ class GRANData(object):
                 self.node_order,
             ),
         )
-        self.graphs = [nx.complete_graph(np.random.randint(5, 100)) for i in range(20)]
-        self.num_graphs = 20
-        print("herrrrr")
+
+        # print("herrrrr")
         if not os.path.isdir(self.save_path) or self.is_overwrite_precompute:
             self.file_names = []
             if not os.path.isdir(self.save_path):
@@ -158,6 +159,7 @@ class GRANData(object):
         S = self.stride
 
         # load graph
+        # print(f"filenames is {self.file_names[index]}")
         adj_list = pickle.load(
             open(self.file_names[index], "rb")
         )  # TODO:make it faster
@@ -300,7 +302,7 @@ class GRANData(object):
             data_batch += [data]
 
         end_time = time.time()
-        # print(f"data_batch is {data_batch}")
+        # print(f"data_batch is {data_batch[0]['adj'].shape}")
         return data_batch
 
     def __len__(self):
