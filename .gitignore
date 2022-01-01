@@ -108,3 +108,5 @@ venv.bak/
 exp/
 
 data/
+
+snapshot_model/
