@@ -20,10 +20,11 @@ class GRANData(object):
         self.block_size = config.model.block_size
         self.stride = config.model.sample_stride
 
-        # self.graphs = graphs
-        # self.num_graphs = len(graphs)
-        self.graphs = [nx.complete_graph(np.random.randint(5, 100)) for i in range(20)]
-        self.num_graphs = 20
+        self.graphs = graphs
+        self.num_graphs = len(graphs)
+        # self.graphs = [nx.complete_graph(np.random.randint(5, 100)) for i in range(20)]
+        # self.graphs = [nx.ladder_graph(np.random.randint(5, 100)) for i in range(100)]
+        # self.num_graphs = 100
         self.npr = np.random.RandomState(config.seed)
         self.node_order = config.dataset.node_order
         self.num_canonical_order = config.model.num_canonical_order
@@ -227,7 +228,9 @@ class GRANData(object):
                         constant_values=1.0,
                     )  # assuming fully connected for the new block
                     adj_block = np.tril(adj_block, k=-1)
-                    adj_block = adj_block + adj_block.transpose()
+                    adj_block = (
+                        adj_block + adj_block.transpose()
+                    )  # TODO: complete in memory
                     adj_block = torch.from_numpy(adj_block).to_sparse()
                     edges += [adj_block.coalesce().indices().long()]
 
@@ -255,7 +258,7 @@ class GRANData(object):
                             np.concatenate(
                                 [np.arange(jj) + ii * N, np.ones(K) * np.inf]
                             )
-                        ]
+                        ]  # TODO: use real features !!!!
 
                     ### get node index for GNN output
                     idx_row_gnn, idx_col_gnn = np.meshgrid(

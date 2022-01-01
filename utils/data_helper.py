@@ -216,8 +216,12 @@ def create_graphs(graph_type, data_dir="data", noise=10.0, seed=1234):
             node_attributes=False,
             graph_labels=True,
         )
-    elif graph_type == "COMPLETE":
-        graphs = [nx.complete_graph(np.random.randint(5, 100)) for i in range(20)]
+    elif graph_type == "CUSTOM":
+
+        # graphs = [nx.complete_graph(np.random.randint(5, 100)) for i in range(20)]
+        # graphs = [nx.star_graph(np.random.randint(5, 100)) for i in range(20)]
+        graphs = [nx.cycle_graph(np.random.randint(5, 100)) for i in range(20)]
+        # graphs = [nx.ladder_graph(np.random.randint(5, 100)) for i in range(20)]
 
     num_nodes = [gg.number_of_nodes() for gg in graphs]
     num_edges = [gg.number_of_edges() for gg in graphs]

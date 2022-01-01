@@ -112,8 +112,8 @@ class GranRunner(object):
 
         ### load graphs
         self.graphs = create_graphs(
-            "COMPLETE", data_dir=config.dataset.data_path
-        )  # config.dataset.name
+            config.dataset.name, data_dir=config.dataset.data_path
+        )  # config.dataset.name , CUSTOM
 
         self.train_ratio = config.dataset.train_ratio
         self.dev_ratio = config.dataset.dev_ratio
@@ -139,7 +139,9 @@ class GranRunner(object):
         self.graphs_train = self.graphs[: self.num_train]
         self.graphs_dev = self.graphs[: self.num_dev]
         self.graphs_test = self.graphs[self.num_train :]
-
+        self.graphs_train = [
+            nx.cycle_graph(np.random.randint(5, 100)) for i in range(16)
+        ]
         self.config.dataset.sparse_ratio = compute_edge_ratio(self.graphs_train)
         logger.info(
             "No Edges vs. Edges in training set = {}".format(
