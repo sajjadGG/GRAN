@@ -110,3 +110,5 @@ exp/
 data/
 
 snapshot_model/
+
+tmp/
