@@ -26,7 +26,7 @@ model:
   is_sym: true
   block_size: 1
   sample_stride: 1
-  max_num_nodes: 361
+  max_num_nodes: 100 # 361
   hidden_dim: 128
   embedding_dim: 128
   num_GNN_layers: 7
@@ -40,19 +40,19 @@ train:
   lr_decay: 0.3
   lr_decay_epoch: [100000000] # no decay
   num_workers: 0
-  max_epoch: 60
+  max_epoch: 3000
   batch_size: 1
-  display_iter: 5
-  snapshot_epoch: 10
+  display_iter: 50
+  snapshot_epoch: 50
   valid_epoch: 5
   lr: 1.0e-4
   wd: 0.0e-4
   momentum: 0.9
   shuffle: true
-  is_resume: true
+  is_resume: false
   resume_epoch: 0
-  resume_dir: exp\GRAN\GRANMixtureBernoulli_grid_2022-Jan-01-19-27-52_11488
-  resume_model: model_snapshot_0000060.pth
+  resume_dir: snapshot_model\
+  resume_model: gran_grid.pth
 test:
   batch_size: 1
   num_workers: 0
@@ -63,5 +63,5 @@ test:
   num_vis: 20
   vis_num_row: 5 # visualize `num_vis` samples in `vis_num_row` rows
   better_vis: true
-  test_model_dir: snapshot_model
-  test_model_name: gran_grid.pth
+  test_model_dir: exp\GRAN\GRANMixtureBernoulli_grid_2022-Jan-09-23-59-45_15720\
+  test_model_name: model_snapshot_0003000.pth

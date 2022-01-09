@@ -105,6 +105,7 @@ class GNN(nn.Module):
         msg = self.msg_func[layer_idx](edge_input)
 
         ### attention on messages
+        # TODO: multihead attention?
         if self.has_attention:
             att_weight = self.att_head[layer_idx](edge_input)
             msg = msg * att_weight
@@ -309,6 +310,7 @@ class GRANMixtureBernoulli(nn.Module):
             H = self.hidden_dim
             N = self.max_num_nodes
             mod_val = (N - K) % S
+            # Pad Adj Matrix
             if mod_val > 0:
                 N_pad = N - K - mod_val + int(np.ceil((K + mod_val) / S)) * S
             else:
@@ -323,7 +325,7 @@ class GRANMixtureBernoulli(nn.Module):
 
             ### cache node state for speed up
             node_state = torch.zeros(B, N_pad, dim_input).to(self.device)
-
+            # TODO: till num node (sampled)
             for ii in range(0, N_pad, S):
                 # for ii in range(0, 3530, S):
                 jj = ii + K
@@ -331,9 +333,10 @@ class GRANMixtureBernoulli(nn.Module):
                     break
 
                 # reset to discard overlap generation
+                # TODO: can it happen?
                 A[:, ii:, :] = 0.0
                 A_prob[:, ii:, :] = 0.0
-                A = torch.tril(A, diagonal=-1)
+                A = torch.tril(A, diagonal=-1)  # TODO: self loop -> diagonal=0
                 A_prob = torch.tril(A_prob, diagonal=-1)
                 if ii >= K:
                     if self.dimension_reduce:
@@ -371,6 +374,7 @@ class GRANMixtureBernoulli(nn.Module):
 
                 if self.has_rand_feat:
                     # create random feature
+                    # TODO: why random feature?
                     att_edge_feat = torch.zeros(
                         edges.shape[0], 2 * self.att_edge_dim
                     ).to(self.device)
@@ -535,11 +539,17 @@ class GRANMixtureBernoulli(nn.Module):
             num_nodes_pmf = torch.from_numpy(num_nodes_pmf).to(self.device)
             num_nodes = (
                 torch.multinomial(num_nodes_pmf, batch_size, replacement=True) + 1
-            )  # shape B X 1
+            )  # shape B X 1 #sample from training example
 
             A_list = [
                 A[ii, : num_nodes[ii], : num_nodes[ii]] for ii in range(batch_size)
             ]
+
+            global called_num
+            with open(f"tmp/example{called_num}.pkl", "wb") as f:
+                dump(A_list, f)
+            # A_list = [A[ii, :, :] for ii in range(batch_size)]
+
             return A_list
 
 
