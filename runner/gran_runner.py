@@ -122,18 +122,18 @@ class GranRunner(object):
             self.config.save_dir = self.train_conf.resume_dir
 
         ### load graphs
-        # self.graphs = create_graphs(
-        #     config.dataset.name, data_dir=config.dataset.data_path
-        # )  # config.dataset.name , CUSTOM
+        self.graphs = create_graphs(
+            config.dataset.name, data_dir=config.dataset.data_path
+        )  # config.dataset.name , CUSTOM
 
         # TODO:test imp
         # self.graphs = [nx.cycle_graph(50) for i in range(2)]
         # TODO: graph communities
         # TODO: test various pre processing for data
-        self.graphs = [
-            nx.grid_graph([np.random.randint(5, 10), np.random.randint(5, 10)])
-            for i in range(200)
-        ]
+        # self.graphs = [
+        #     nx.grid_graph([np.random.randint(10, 20), np.random.randint(10, 20)])
+        #     for _ in range(100)
+        # ]
         print(len(self.graphs))
 
         self.train_ratio = config.dataset.train_ratio
@@ -472,6 +472,7 @@ class GranRunner(object):
                     gg.remove_nodes_from(list(nx.isolates(gg)))
 
             # display the largest connected component for better visualization
+            # TODO: mention in your paper
             vis_graphs = []
             for gg in graphs_pred_vis:
                 CGs = [gg.subgraph(c) for c in nx.connected_components(gg)]
