@@ -1,4 +1,3 @@
----
 exp_name: GRAN
 exp_dir: exp/GRAN
 runner: GranRunner
@@ -17,18 +16,18 @@ dataset:
   num_subgraph_batch: 1 # number of subgraphs per mini-batch
   num_fwd_pass: 1
   has_node_feat: false
-  is_save_split: false  
+  is_save_split: false
   is_sample_subgraph: true # set to true if you want to sample subgraphs
-  is_overwrite_precompute: false
+  is_overwrite_precompute: true
 model:
-  name: GRANMixtureBernoulli  
+  name: GRANMixtureBernoulli
   num_mix_component: 20
   is_sym: true
   block_size: 1
   sample_stride: 1
-  max_num_nodes: 3530
-  hidden_dim: 256
-  embedding_dim: 256
+  max_num_nodes: 400
+  hidden_dim: 128
+  embedding_dim: 128
   num_GNN_layers: 7
   num_GNN_prop: 1
   num_canonical_order: 1
@@ -36,32 +35,32 @@ model:
   has_attention: true
   edge_weight: 1.0e+0
 train:
-  optimizer: Adam  
+  optimizer: Adam
   lr_decay: 0.1
   lr_decay_epoch: [100000000] # no decay
   num_workers: 0
-  max_epoch: 20000
+  max_epoch: 1000
   batch_size: 1
   display_iter: 10
   snapshot_epoch: 100
   valid_epoch: 50
-  lr: 1.0e-4
-  wd: 0.0e-4
+  lr: 1.0e-3
+  wd: 0.0e+2
   momentum: 0.9
   shuffle: true
   is_resume: false
-  resume_epoch: 5000
+  resume_epoch: 0
   resume_dir: # exp/GRAN/your_exp_folder
   resume_model: model_snapshot_0005000.pth
-test:  
-  batch_size: 1
+test:
+  batch_size: 2
   num_workers: 0
-  num_test_gen: 9 # number of generated samples  
+  num_test_gen: 9 # number of generated samples
   is_vis: true
   is_single_plot: false # visualize `num_vis` samples in a single image
   is_test_ER: false # test Erdos-Renyi baseline
   num_vis: 20
   vis_num_row: 3 # visualize `num_vis` samples in `vis_num_row` rows
-  better_vis: true
-  test_model_dir: snapshot_model
-  test_model_name: gran_DB.pth
+  better_vis: false
+  test_model_dir: exp/GRAN\GRANMixtureBernoulli_FIRSTMM_DB_2022-Jan-10-14-50-48_14056
+  test_model_name: model_snapshot_0000500.pth

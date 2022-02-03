@@ -105,6 +105,12 @@ venv.bak/
 
 #folders
 
-.exp/
 
-.data/
+exp/
+
+data/
+
+snapshot_model/
+
+tmp/
+
