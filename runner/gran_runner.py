@@ -134,7 +134,9 @@ class GranRunner(object):
         #     nx.grid_graph([np.random.randint(10, 20), np.random.randint(10, 20)])
         #     for _ in range(100)
         # ]
-        print(len(self.graphs))
+
+        # self.graphs = [nx.grid_graph([8, 6]) for _ in range(10)]
+        # print(len(self.graphs))
 
         self.train_ratio = config.dataset.train_ratio
         self.dev_ratio = config.dataset.dev_ratio

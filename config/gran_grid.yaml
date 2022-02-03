@@ -1,4 +1,3 @@
----
 exp_name: GRAN
 exp_dir: exp/GRAN
 runner: GranRunner
@@ -46,7 +45,7 @@ train:
   snapshot_epoch: 100
   valid_epoch: 50
   lr: 1.0e-4
-  wd: 0.0e-4
+  wd: 0.0e+2
   momentum: 0.9
   shuffle: true
   is_resume: false
@@ -63,5 +62,5 @@ test:
   num_vis: 20
   vis_num_row: 5 # visualize `num_vis` samples in `vis_num_row` rows
   better_vis: true
-  test_model_dir: snapshot_model
-  test_model_name: gran_grid.pth
+  test_model_dir: exp/GRAN\GRANMixtureBernoulli_grid_2022-Jan-28-12-31-20_15528
+  test_model_name: model_snapshot_0003000.pth
