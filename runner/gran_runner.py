@@ -47,6 +47,7 @@ __all__ = ["GranRunner", "compute_edge_ratio", "get_graph", "evaluate"]
 NPR = np.random.RandomState(seed=1234)
 
 
+
 def update_yaml_file(file_name, parent_field, field, value):
     import ruamel.yaml
 
@@ -56,6 +57,8 @@ def update_yaml_file(file_name, parent_field, field, value):
     data[parent_field][field] = value
     with open(file_name, "w") as f:
         yaml.dump(data, f)
+
+
 
 
 def compute_edge_ratio(G_list):
@@ -124,6 +127,7 @@ class GranRunner(object):
         ### load graphs
         self.graphs = create_graphs(
             config.dataset.name, data_dir=config.dataset.data_path
+
         )  # config.dataset.name , CUSTOM
 
         # TODO:test imp
@@ -137,6 +141,7 @@ class GranRunner(object):
 
         # self.graphs = [nx.grid_graph([8, 6]) for _ in range(10)]
         # print(len(self.graphs))
+
 
         self.train_ratio = config.dataset.train_ratio
         self.dev_ratio = config.dataset.dev_ratio
@@ -162,12 +167,14 @@ class GranRunner(object):
         self.graphs_train = self.graphs[: self.num_train]
         self.graphs_dev = self.graphs[: self.num_dev]
         self.graphs_test = self.graphs[self.num_train :]
+
         # self.graphs_train = [
         #     nx.cycle_graph(np.random.randint(20, 100)) for i in range(16)
         # ]
         # self.graphs_train = [
         #     nx.Graph(np.identity(np.random.randint(20, 100))) for _ in range(16)
         # ]
+
 
         self.config.dataset.sparse_ratio = compute_edge_ratio(self.graphs_train)
         logger.info(
@@ -178,11 +185,13 @@ class GranRunner(object):
 
         self.num_nodes_pmf_train = np.bincount(
             [len(gg.nodes) for gg in self.graphs_train]
+
         )  # histogram on number of nodes
         self.max_num_nodes = len(self.num_nodes_pmf_train)
         self.num_nodes_pmf_train = (
             self.num_nodes_pmf_train / self.num_nodes_pmf_train.sum()
         )  # normalize
+
 
         ### save split for benchmarking
         if config.dataset.is_save_split:
@@ -205,14 +214,18 @@ class GranRunner(object):
 
     def train(self):
         ### create data loader
+
         last_file_name = None
         last_file_path = None
+
         train_dataset = eval(self.dataset_conf.loader_name)(
             self.config, self.graphs_train, tag="train"
         )
         print(f"class: {type(train_dataset)}")
+
         print(f"len: {len(train_dataset)}")
         print(f"get item {train_dataset.__getitem__(0)[0]['adj'].shape}")
+
         # print(train_dataset)
         train_loader = torch.utils.data.DataLoader(
             train_dataset,
@@ -225,6 +238,7 @@ class GranRunner(object):
 
         # create models
         l = train_loader.__iter__().next()
+
         print(f"even here : {l[0]['adj'].shape}")
         model = eval(self.model_conf.name)(self.config)
         # from torchsummary import summary
@@ -233,6 +247,7 @@ class GranRunner(object):
         # print(f"data shape is {l.shape}")
         # summary(model, l.shape)
         params = filter(lambda p: p.requires_grad, model.parameters())
+
 
         if self.use_gpu:
             model = DataParallel(model, device_ids=self.gpus).to(self.device)
@@ -289,8 +304,10 @@ class GranRunner(object):
 
             for inner_iter in range(len(train_loader) // self.num_gpus):
                 optimizer.zero_grad()
+
                 l = train_loader.__iter__().next()
                 # print(f"after here : {l[0]['adj'].shape}")
+
                 batch_data = []
                 if self.use_gpu:
                     for _ in self.gpus:
@@ -301,9 +318,11 @@ class GranRunner(object):
                 avg_train_loss = 0.0
                 for ff in range(self.dataset_conf.num_fwd_pass):
                     batch_fwd = []
+
                     # print(
                     #     f"lets see training example {ff} : {batch_data[0][ff]['adj'].shape}"
                     # )
+
                     if self.use_gpu:
                         for dd, gpu_id in enumerate(self.gpus):
                             data = {}
@@ -377,7 +396,10 @@ class GranRunner(object):
             # snapshot model
             if (epoch + 1) % self.train_conf.snapshot_epoch == 0:
                 logger.info("Saving Snapshot @ epoch {:04d}".format(epoch + 1))
+
                 last_file_path, last_file_name = snapshot(
+
+
                     model.module if self.use_gpu else model,
                     optimizer,
                     self.config,
@@ -389,6 +411,7 @@ class GranRunner(object):
             results, open(os.path.join(self.config.save_dir, "train_stats.p"), "wb")
         )
 
+
         self.writer.close()
         update_yaml_file(
             self.config["org_config_path"], "test", "test_model_dir", last_file_path
@@ -396,11 +419,16 @@ class GranRunner(object):
         update_yaml_file(
             self.config["org_config_path"], "test", "test_model_name", last_file_name
         )
+
         return 1
 
     def test(self):
         self.config.save_dir = self.test_conf.test_model_dir
+
         print(f"traing graph : {len(self.graphs_train)}")
+
+
+
         ### Compute Erdos-Renyi baseline
         if self.config.test.is_test_ER:
             p_ER = sum([aa.number_of_edges() for aa in self.graphs_train]) / sum(
@@ -412,9 +440,11 @@ class GranRunner(object):
             ]
         else:
             ### load model
+
             model = eval(self.model_conf.name)(
                 self.config
             )  # object as GRAN_MIXTURE_BERNOULLI
+
             model_file = os.path.join(
                 self.config.save_dir, self.test_conf.test_model_name
             )
@@ -423,7 +453,9 @@ class GranRunner(object):
             if self.use_gpu:
                 model = nn.DataParallel(model, device_ids=self.gpus).to(self.device)
 
+
             model.eval()  # model call
+
 
             ### Generate Graphs
             A_pred = []
@@ -451,7 +483,7 @@ class GranRunner(object):
 
         ### Visualize Generated Graphs
         if self.is_vis:
-            print("here")
+
             num_col = self.vis_num_row
             num_row = int(np.ceil(self.num_vis / num_col))
             test_epoch = self.test_conf.test_model_name
@@ -474,7 +506,9 @@ class GranRunner(object):
                     gg.remove_nodes_from(list(nx.isolates(gg)))
 
             # display the largest connected component for better visualization
+
             # TODO: mention in your paper
+
             vis_graphs = []
             for gg in graphs_pred_vis:
                 CGs = [gg.subgraph(c) for c in nx.connected_components(gg)]

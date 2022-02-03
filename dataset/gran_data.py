@@ -22,9 +22,12 @@ class GRANData(object):
 
         self.graphs = graphs
         self.num_graphs = len(graphs)
+
         # self.graphs = [nx.complete_graph(np.random.randint(5, 100)) for i in range(20)]
         # self.graphs = [nx.ladder_graph(np.random.randint(5, 100)) for i in range(100)]
         # self.num_graphs = 100
+
+
         self.npr = np.random.RandomState(config.seed)
         self.node_order = config.dataset.node_order
         self.num_canonical_order = config.model.num_canonical_order
@@ -50,7 +53,10 @@ class GRANData(object):
             ),
         )
 
-        # print("herrrrr")
+        self.graphs = [nx.complete_graph(np.random.randint(5, 100)) for i in range(20)]
+        self.num_graphs = 20
+        print("herrrrr")
+
         if not os.path.isdir(self.save_path) or self.is_overwrite_precompute:
             self.file_names = []
             if not os.path.isdir(self.save_path):
@@ -160,7 +166,7 @@ class GRANData(object):
         S = self.stride
 
         # load graph
-        # print(f"filenames is {self.file_names[index]}")
+
         adj_list = pickle.load(
             open(self.file_names[index], "rb")
         )  # TODO:make it faster
@@ -228,9 +234,11 @@ class GRANData(object):
                         constant_values=1.0,
                     )  # assuming fully connected for the new block
                     adj_block = np.tril(adj_block, k=-1)
+
                     adj_block = (
                         adj_block + adj_block.transpose()
                     )  # TODO: complete in memory
+
                     adj_block = torch.from_numpy(adj_block).to_sparse()
                     edges += [adj_block.coalesce().indices().long()]
 
@@ -258,7 +266,9 @@ class GRANData(object):
                             np.concatenate(
                                 [np.arange(jj) + ii * N, np.ones(K) * np.inf]
                             )
+
                         ]  # TODO: use real features !!!!
+
 
                     ### get node index for GNN output
                     idx_row_gnn, idx_col_gnn = np.meshgrid(
@@ -305,7 +315,7 @@ class GRANData(object):
             data_batch += [data]
 
         end_time = time.time()
-        # print(f"data_batch is {data_batch[0]['adj'].shape}")
+
         return data_batch
 
     def __len__(self):

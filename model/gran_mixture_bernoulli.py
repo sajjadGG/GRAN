@@ -584,6 +584,7 @@ def mixture_bernoulli_loss(
 
     Returns:
       loss (and potentially neg log prob)
+
     """
 
     num_subgraph = subgraph_idx_base[-1]  # == subgraph_idx.max() + 1
@@ -654,3 +655,4 @@ def mixture_bernoulli_loss(
         return loss, neg_log_prob
     else:
         return loss
+

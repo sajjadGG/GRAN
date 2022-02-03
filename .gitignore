@@ -105,6 +105,7 @@ venv.bak/
 
 #folders
 
+
 exp/
 
 data/
@@ -112,3 +113,4 @@ data/
 snapshot_model/
 
 tmp/
+
