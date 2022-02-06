@@ -47,7 +47,6 @@ __all__ = ["GranRunner", "compute_edge_ratio", "get_graph", "evaluate"]
 NPR = np.random.RandomState(seed=1234)
 
 
-
 def update_yaml_file(file_name, parent_field, field, value):
     import ruamel.yaml
 
@@ -57,8 +56,6 @@ def update_yaml_file(file_name, parent_field, field, value):
     data[parent_field][field] = value
     with open(file_name, "w") as f:
         yaml.dump(data, f)
-
-
 
 
 def compute_edge_ratio(G_list):
@@ -127,9 +124,9 @@ class GranRunner(object):
         ### load graphs
         self.graphs = create_graphs(
             config.dataset.name, data_dir=config.dataset.data_path
-
         )  # config.dataset.name , CUSTOM
 
+        self.graphs = [nx.connected_watts_strogatz_graph(7, 2, 0.2) for _ in range(5)]
         # TODO:test imp
         # self.graphs = [nx.cycle_graph(50) for i in range(2)]
         # TODO: graph communities
@@ -141,7 +138,6 @@ class GranRunner(object):
 
         # self.graphs = [nx.grid_graph([8, 6]) for _ in range(10)]
         # print(len(self.graphs))
-
 
         self.train_ratio = config.dataset.train_ratio
         self.dev_ratio = config.dataset.dev_ratio
@@ -168,6 +164,11 @@ class GranRunner(object):
         self.graphs_dev = self.graphs[: self.num_dev]
         self.graphs_test = self.graphs[self.num_train :]
 
+        self.graphs_test = [
+            nx.connected_watts_strogatz_graph(np.random.randint(5, 15), 2, 0.2)
+            for _ in range(20)
+        ]
+
         # self.graphs_train = [
         #     nx.cycle_graph(np.random.randint(20, 100)) for i in range(16)
         # ]
@@ -175,23 +176,20 @@ class GranRunner(object):
         #     nx.Graph(np.identity(np.random.randint(20, 100))) for _ in range(16)
         # ]
 
-
         self.config.dataset.sparse_ratio = compute_edge_ratio(self.graphs_train)
         logger.info(
             "No Edges vs. Edges in training set = {}".format(
                 self.config.dataset.sparse_ratio
             )
         )
-
+        # TODO: RL based exploration
         self.num_nodes_pmf_train = np.bincount(
             [len(gg.nodes) for gg in self.graphs_train]
-
         )  # histogram on number of nodes
         self.max_num_nodes = len(self.num_nodes_pmf_train)
         self.num_nodes_pmf_train = (
             self.num_nodes_pmf_train / self.num_nodes_pmf_train.sum()
         )  # normalize
-
 
         ### save split for benchmarking
         if config.dataset.is_save_split:
@@ -248,10 +246,8 @@ class GranRunner(object):
         # summary(model, l.shape)
         params = filter(lambda p: p.requires_grad, model.parameters())
 
-
         if self.use_gpu:
             model = DataParallel(model, device_ids=self.gpus).to(self.device)
-
         # create optimizer
 
         if self.train_conf.optimizer == "SGD":
@@ -398,8 +394,6 @@ class GranRunner(object):
                 logger.info("Saving Snapshot @ epoch {:04d}".format(epoch + 1))
 
                 last_file_path, last_file_name = snapshot(
-
-
                     model.module if self.use_gpu else model,
                     optimizer,
                     self.config,
@@ -410,7 +404,6 @@ class GranRunner(object):
         pickle.dump(
             results, open(os.path.join(self.config.save_dir, "train_stats.p"), "wb")
         )
-
 
         self.writer.close()
         update_yaml_file(
@@ -426,8 +419,6 @@ class GranRunner(object):
         self.config.save_dir = self.test_conf.test_model_dir
 
         print(f"traing graph : {len(self.graphs_train)}")
-
-
 
         ### Compute Erdos-Renyi baseline
         if self.config.test.is_test_ER:
@@ -453,9 +444,7 @@ class GranRunner(object):
             if self.use_gpu:
                 model = nn.DataParallel(model, device_ids=self.gpus).to(self.device)
 
-
             model.eval()  # model call
-
 
             ### Generate Graphs
             A_pred = []

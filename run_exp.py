@@ -7,8 +7,12 @@ import numpy as np
 from pprint import pprint
 
 from runner import *
+from runner.aug_runner import AugRunner
 from utils.logger import setup_logging
 from utils.arg_helper import parse_arguments, get_config
+from utils.data_helper import create_graphs
+
+import networkx as nx
 
 torch.set_printoptions(profile="full")
 
@@ -38,6 +42,11 @@ def main():
     # Run the experiment
     try:
         runner = eval(config.runner)(config)
+        # train_dataset = [nx.connected_watts_strogatz_graph(7, 2, 0.2) for _ in range(5)]
+        # test_dataset = create_graphs("grid")[-20:]
+        # runner = AugRunner(
+        #     config, train_dataset, test_dataset, steps=10, epoch_per_step=5
+        # )
         if not args.test:
             runner.train()
         else:

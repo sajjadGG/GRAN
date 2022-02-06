@@ -19,15 +19,11 @@ class GRANData(object):
         self.max_num_nodes = config.model.max_num_nodes
         self.block_size = config.model.block_size
         self.stride = config.model.sample_stride
-
+        # self.graphs = [nx.grid_2d_graph(3, 3) for _ in range(5)]
+        # self.graphs = [nx.complement(nx.grid_2d_graph(3, 3)) for _ in range(5)]
         self.graphs = graphs
-        self.num_graphs = len(graphs)
-
-        # self.graphs = [nx.complete_graph(np.random.randint(5, 100)) for i in range(20)]
-        # self.graphs = [nx.ladder_graph(np.random.randint(5, 100)) for i in range(100)]
-        # self.num_graphs = 100
-
-
+        self.num_graphs = len(self.graphs)
+        print(f"number of given graphs : {self.num_graphs}")
         self.npr = np.random.RandomState(config.seed)
         self.node_order = config.dataset.node_order
         self.num_canonical_order = config.model.num_canonical_order
@@ -52,10 +48,6 @@ class GRANData(object):
                 self.node_order,
             ),
         )
-
-        self.graphs = [nx.complete_graph(np.random.randint(5, 100)) for i in range(20)]
-        self.num_graphs = 20
-        print("herrrrr")
 
         if not os.path.isdir(self.save_path) or self.is_overwrite_precompute:
             self.file_names = []
@@ -166,10 +158,16 @@ class GRANData(object):
         S = self.stride
 
         # load graph
-
         adj_list = pickle.load(
             open(self.file_names[index], "rb")
         )  # TODO:make it faster
+
+        import networkx as nx
+        import matplotlib.pyplot as plt
+
+        # plt.title("real train graph ?")
+        # nx.draw(nx.Graph(adj_list[0]))
+        # plt.show()
         num_nodes = adj_list[0].shape[0]
         num_subgraphs = int(np.floor((num_nodes - K) / S) + 1)
 
@@ -234,11 +232,7 @@ class GRANData(object):
                         constant_values=1.0,
                     )  # assuming fully connected for the new block
                     adj_block = np.tril(adj_block, k=-1)
-
-                    adj_block = (
-                        adj_block + adj_block.transpose()
-                    )  # TODO: complete in memory
-
+                    adj_block = adj_block + adj_block.transpose()
                     adj_block = torch.from_numpy(adj_block).to_sparse()
                     edges += [adj_block.coalesce().indices().long()]
 
@@ -266,9 +260,7 @@ class GRANData(object):
                             np.concatenate(
                                 [np.arange(jj) + ii * N, np.ones(K) * np.inf]
                             )
-
-                        ]  # TODO: use real features !!!!
-
+                        ]
 
                     ### get node index for GNN output
                     idx_row_gnn, idx_col_gnn = np.meshgrid(
@@ -315,7 +307,7 @@ class GRANData(object):
             data_batch += [data]
 
         end_time = time.time()
-
+        # print(f"data_batch is {data_batch}")
         return data_batch
 
     def __len__(self):

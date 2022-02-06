@@ -541,13 +541,16 @@ class GRANMixtureBernoulli(nn.Module):
                 torch.multinomial(num_nodes_pmf, batch_size, replacement=True) + 1
             )  # shape B X 1 #sample from training example
 
-            A_list = [
-                A[ii, : num_nodes[ii], : num_nodes[ii]] for ii in range(batch_size)
-            ]
+            A_list = [A[ii, :, :] for ii in range(batch_size)]
 
             global called_num
             with open(f"tmp/example{called_num}.pkl", "wb") as f:
                 dump(A_list, f)
+
+            A_list = [
+                A[ii, : num_nodes[ii], : num_nodes[ii]] for ii in range(batch_size)
+            ]
+
             # A_list = [A[ii, :, :] for ii in range(batch_size)]
 
             return A_list
@@ -655,4 +658,3 @@ def mixture_bernoulli_loss(
         return loss, neg_log_prob
     else:
         return loss
-

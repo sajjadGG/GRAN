@@ -27,10 +27,25 @@ from utils.eval_helper import *
 from utils.dist_helper import compute_mmd, gaussian_emd, gaussian, emd, gaussian_tv
 from utils.vis_helper import draw_graph_list, draw_graph_list_separate
 from utils.data_parallel import DataParallel
+from easydict import EasyDict as edict
+import matplotlib.pyplot as plt
+from utils.runner_utils import get_optimizer, generate_graphs
 
-from runner_utils import get_optimizer
+from embed.graph_embedding import get_augmented_graphs
 
 logger = get_logger("exp_logger")
+
+__all__ = ["AugRunner", "get_graph"]
+
+
+def get_graph(adj):
+    """get a graph from zero-padded adj"""
+    # remove all zeros rows and columns
+    adj = adj[~np.all(adj == 0, axis=1)]
+    adj = adj[:, ~np.all(adj == 0, axis=0)]
+    adj = np.asmatrix(adj)
+    G = nx.from_numpy_matrix(adj)
+    return G
 
 
 class AugRunner:
@@ -41,7 +56,7 @@ class AugRunner:
         test_graphs: list,
         steps=20,
         epoch_per_step=20,
-        num_dev=10,
+        num_dev=0,
     ) -> None:
         self.config = config
         self.train_graphs = train_graphs
@@ -71,20 +86,23 @@ class AugRunner:
             self.npr = np.random.RandomState(self.seed)
             self.npr.shuffle(self.graphs)
 
-    def train(self) -> None:
-
-        train_dataset = GRANData(self.config, self.train_graphs, tag="train")
-
-        train_loader = torch.utils.data.DataLoader(
-            self.train_graphs,
-            batch_size=self.train_conf.batch_size,
-            shuffle=self.train_conf.shuffle,
-            num_workers=self.train_conf.num_workers,
-            collate_fn=self.train_graphs.collate_fn,
-            drop_last=False,
+        self.num_nodes_pmf_train = np.bincount(
+            [len(gg.nodes) for gg in self.train_graphs]
         )
 
-        self.graphs_train = self.train_graphs[self.num_dev :]
+        self.max_num_nodes = len(self.num_nodes_pmf_train)
+        self.num_nodes_pmf_train = (
+            self.num_nodes_pmf_train / self.num_nodes_pmf_train.sum()
+        )  # normalize
+
+        self.num_generate_graphs = 5
+        self.batch_size_pred = 2
+
+    def train(self) -> None:
+        self.model_last_file = ""
+        self.graphs_train = self.train_graphs[
+            self.num_dev :
+        ]  # used during training and get manipulated while train_graphs is immutable
         self.graphs_dev = self.train_graphs[: self.num_dev]
         self.graphs_test = self.test_graphs
 
@@ -92,8 +110,8 @@ class AugRunner:
         params = filter(lambda p: p.requires_grad, model.parameters())
         if self.use_gpu:
             model = DataParallel(model, device_ids=self.gpus).to(self.device)
-
-        optimizer = get_optimizer(self.conf, params)
+        print(self.train_conf)
+        optimizer = get_optimizer(self.train_conf, params)
         early_stop = EarlyStopper([0.0], win_size=100, is_decrease=False)
         lr_scheduler = optim.lr_scheduler.MultiStepLR(
             optimizer,
@@ -107,9 +125,56 @@ class AugRunner:
 
         results = defaultdict(list)
 
-        for step_num in self.steps:
+        for step_num in range(self.steps):
             # generate augmented samples
+            print(f"step : {step_num}")
+            if step_num > 0:
 
+                model_t = eval(self.model_conf.name)(self.config)
+
+                load_model(model_t, self.model_last_file, self.device)
+                model_t = nn.DataParallel(model_t, device_ids=self.gpus).to(self.device)
+                model_t.eval()  # model call
+
+                ### Generate Graphs
+                A_pred = []
+                num_nodes_pred = []
+
+                gen_run_time = []
+                for ii in tqdm(range(self.num_generate_graphs)):
+                    with torch.no_grad():
+                        input_dict = {}
+                        input_dict["is_sampling"] = True
+                        input_dict["batch_size"] = self.batch_size_pred
+                        input_dict["num_nodes_pmf"] = self.num_nodes_pmf_train
+                        A_tmp = model_t(input_dict)
+                        A_pred += [aa.data.cpu().numpy() for aa in A_tmp]
+                        num_nodes_pred += [aa.shape[0] for aa in A_tmp]
+
+                graphs_gen = [get_graph(aa) for aa in A_pred]
+                from pickle import load, dump
+
+                with open("tmp/gen_graphs_aug.pkl", "wb") as f:
+                    dump(graphs_gen, f)
+                best_graphs, distance = get_augmented_graphs(
+                    self.train_graphs, graphs_gen, n_aug=2
+                )
+                self.graphs_train = self.train_graphs + best_graphs
+                # print(distance)
+                plt.title(f"distance : {distance[0]}")
+                nx.draw(best_graphs[0])
+                plt.show()
+                print("generated graphs")
+            print(len(self.graphs_train))
+            train_dataset = GRANData(self.config, self.graphs_train, tag="train")
+            train_loader = torch.utils.data.DataLoader(
+                train_dataset,
+                batch_size=self.train_conf.batch_size,
+                shuffle=self.train_conf.shuffle,
+                num_workers=self.train_conf.num_workers,
+                collate_fn=train_dataset.collate_fn,
+                drop_last=False,
+            )
             # Training Loop
             for epoch in range(self.epoch_per_step):
                 model.train()
@@ -213,8 +278,20 @@ class AugRunner:
                         model.module if self.use_gpu else model,
                         optimizer,
                         self.config,
-                        epoch + 1,
+                        step_num * self.epoch_per_step + epoch + 1,
                         scheduler=lr_scheduler,
                     )
+
+            last_file_path, last_file_name = snapshot(
+                model.module if self.use_gpu else model,
+                optimizer,
+                self.config,
+                step_num * self.epoch_per_step + epoch + 1,
+                scheduler=lr_scheduler,
+            )
+            self.model_last_file = last_file_path + "/" + last_file_name
+
+        with open("tmp/result.pkl", "wb") as f:
+            dump(results, f)
 
         return 1

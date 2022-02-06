@@ -18,7 +18,7 @@ dataset:
   has_node_feat: false
   is_save_split: false
   is_sample_subgraph: true # set to true if you want to sample subgraphs
-  is_overwrite_precompute: false
+  is_overwrite_precompute: true
 model:
   name: GRANMixtureBernoulli
   num_mix_component: 20
@@ -39,10 +39,10 @@ train:
   lr_decay: 0.3
   lr_decay_epoch: [100000000] # no decay
   num_workers: 0
-  max_epoch: 3
+  max_epoch: 50
   batch_size: 1
   display_iter: 1
-  snapshot_epoch: 3
+  snapshot_epoch: 5
   valid_epoch: 5
   lr: 1.0e-4
   wd: 0.0e+2
@@ -62,5 +62,5 @@ test:
   num_vis: 20
   vis_num_row: 5 # visualize `num_vis` samples in `vis_num_row` rows
   better_vis: true
-  test_model_dir: exp/GRAN\GRANMixtureBernoulli_grid_2022-Jan-28-12-31-20_15528
-  test_model_name: model_snapshot_0003000.pth
+  test_model_dir: exp/GRAN\GRANMixtureBernoulli_grid_2022-Feb-07-02-44-47_13012
+  test_model_name: model_snapshot_0000050.pth
