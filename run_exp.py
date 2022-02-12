@@ -42,10 +42,13 @@ def main():
     # Run the experiment
     try:
         runner = eval(config.runner)(config)
-        # train_dataset = [nx.connected_watts_strogatz_graph(7, 2, 0.2) for _ in range(5)]
+        # train_dataset = [
+        #     nx.relabel_nodes(e, {v: k for k, v in enumerate(e.nodes)})
+        #     for e in [nx.grid_2d_graph(15, 12) for _ in range(100)]
+        # ]
         # test_dataset = create_graphs("grid")[-20:]
         # runner = AugRunner(
-        #     config, train_dataset, test_dataset, steps=10, epoch_per_step=5
+        #     config, train_dataset, test_dataset, steps=5, epoch_per_step=40
         # )
         if not args.test:
             runner.train()

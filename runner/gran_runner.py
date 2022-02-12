@@ -125,8 +125,16 @@ class GranRunner(object):
         self.graphs = create_graphs(
             config.dataset.name, data_dir=config.dataset.data_path
         )  # config.dataset.name , CUSTOM
+        # gt = create_graphs(config.dataset.name, data_dir=config.dataset.data_path)[23]
+        # self.graphs = [gt for _ in range(10)]
+        # nx.draw(self.graphs[0])
+        import matplotlib.pyplot as plt
 
-        self.graphs = [nx.connected_watts_strogatz_graph(7, 2, 0.2) for _ in range(5)]
+        plt.show()
+        # self.graphs = [
+        #     nx.relabel_nodes(e, {v: k for k, v in enumerate(e.nodes)})
+        #     for e in [nx.grid_2d_graph(15, 12) for _ in range(100)]
+        # ]
         # TODO:test imp
         # self.graphs = [nx.cycle_graph(50) for i in range(2)]
         # TODO: graph communities
@@ -160,14 +168,15 @@ class GranRunner(object):
             self.npr = np.random.RandomState(self.seed)
             self.npr.shuffle(self.graphs)
 
-        self.graphs_train = self.graphs[: self.num_train]
+        # self.graphs_train = self.graphs[: self.num_train]
+        self.graphs_train = self.graphs[:]
         self.graphs_dev = self.graphs[: self.num_dev]
         self.graphs_test = self.graphs[self.num_train :]
 
-        self.graphs_test = [
-            nx.connected_watts_strogatz_graph(np.random.randint(5, 15), 2, 0.2)
-            for _ in range(20)
-        ]
+        # self.graphs_test = [
+        #     nx.connected_watts_strogatz_graph(np.random.randint(5, 15), 2, 0.2)
+        #     for _ in range(20)
+        # ]
 
         # self.graphs_train = [
         #     nx.cycle_graph(np.random.randint(20, 100)) for i in range(16)

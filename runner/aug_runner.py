@@ -31,11 +31,18 @@ from easydict import EasyDict as edict
 import matplotlib.pyplot as plt
 from utils.runner_utils import get_optimizer, generate_graphs
 
-from embed.graph_embedding import get_augmented_graphs
+from embed.graph_embedding import (
+    get_augmented_graphs,
+    get_augmented_graphs_with_threshold,
+)
 
 logger = get_logger("exp_logger")
 
 __all__ = ["AugRunner", "get_graph"]
+
+
+def sigmoid(z):
+    return 1 / (1 + np.exp(-z))
 
 
 def get_graph(adj):
@@ -139,7 +146,7 @@ class AugRunner:
                 ### Generate Graphs
                 A_pred = []
                 num_nodes_pred = []
-
+                self.num_generate_graphs = self.num_generate_graphs * (step_num + 1)
                 gen_run_time = []
                 for ii in tqdm(range(self.num_generate_graphs)):
                     with torch.no_grad():
@@ -156,15 +163,25 @@ class AugRunner:
 
                 with open("tmp/gen_graphs_aug.pkl", "wb") as f:
                     dump(graphs_gen, f)
-                best_graphs, distance = get_augmented_graphs(
-                    self.train_graphs, graphs_gen, n_aug=2
+                # TODO:aggresive threshold : increase with each step
+
+                sim_threshold = 0.95 + 0.05 * sigmoid(step_num - 1)
+
+                print(
+                    f"sim threshold : {sim_threshold} \n graphs_gen : {self.num_generate_graphs}"
+                )
+                best_graphs, distance = get_augmented_graphs_with_threshold(
+                    self.train_graphs, graphs_gen, sim_threshold=sim_threshold
                 )
                 self.graphs_train = self.train_graphs + best_graphs
-                # print(distance)
-                plt.title(f"distance : {distance[0]}")
-                nx.draw(best_graphs[0])
-                plt.show()
-                print("generated graphs")
+                print(len(best_graphs))
+                print(f"sim mean : {np.mean(distance)}")
+                print(f"new graphs train len {len(self.graphs_train)}")
+                if len(best_graphs) > 0:
+                    plt.title(f"similarity : {np.mean(distance)}")
+                    nx.draw(best_graphs[0])
+                    plt.show()
+                    print("generated graphs")
             print(len(self.graphs_train))
             train_dataset = GRANData(self.config, self.graphs_train, tag="train")
             train_loader = torch.utils.data.DataLoader(

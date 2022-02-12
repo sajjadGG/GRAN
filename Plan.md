@@ -12,3 +12,5 @@
 - Number of nodes
 - Nodes PMF
 - GIN
+- Contrastive Loss (Postive Pair using various ordering)
+- Distillation
